@@ -13,20 +13,21 @@ int main(){
 	char **args= NULL;
 	while(WEXITSTATUS(status)!=2){
 		if ((pid=fork())==0){
-			char *p = getenv("PATH"), *_token = NULL, *command_token = NULL,*flags_token = NULL, _input[10000],cmd_path[10000];
-			char* _path= (char*)calloc(strlen(p),sizeof(char));
+			// Intalizations step
+			char *p = getenv("PATH"), *_token = NULL, *command_token = NULL,*flags_token = NULL, _input[10000],cmd_path[10000]; 
+			char* _path= (char*)calloc(strlen(p),sizeof(char)); 
 			strcpy(_path,p);
 			int wrdCount=0;
 			
 			printf("#-:"); //Prompt to command.
 			fgets(_input,sizeof(_input),stdin);
 			
-			/*Reserved space for looping through the space candidates*/
+			/*Counting the amount of words in the input string - allocating an array of strings according to the result.*/
 			for (int k=1; k<strlen(_input); k++){
 				if(isspace(_input[k])   &&   !isspace(_input[k-1]) )
 					wrdCount++;			
 			}
-			_input[strcspn(_input,"\n")]= 0;
+			_input[strcspn(_input,"\n")]= 0; // Avoiding newline tokens.
 			
 			args= (char**)calloc(wrdCount, sizeof(char**));
 			
@@ -36,36 +37,29 @@ int main(){
 			if(strcmp(command_token,"leave")==0){
 				exit(2); // User hard exit.
 			}
-			args[0]=command_token;
-			i+=1;
+			args[i++]=command_token; //Setting first string in the array to the name of command and advandcing the indexer.
+			
 			flags_token = strtok(NULL," \t");
 			if (flags_token!=NULL){
 				while (flags_token){
-					args[i]=flags_token;
-					i++;
+					args[i++]=flags_token; //Setting flag field, advanding indexer...
 					flags_token = strtok(NULL," \t");	
 				}
 				flags_token=command_token;
 			}
 			
 			
-			args[i]=NULL;
+			args[i]=NULL; //Capping arguements sent to execv with NULL.
 			
-			/* //Checking the flags.
-			printf("Command: %s\nFlags:%s\n",command_token,flags_token);
-			printf("i= %d, j=%d\n",i,j);
-			for(j;j<=i;j++){
-				printf("Argument number %d, is: %s\n",j,args[j]);	
-			}
-			*/
 			
 			_token=strtok(_path,":");
 			while(_token){
+				//Concatenating the name of the command to the directory token we're currently on.
 				cmd_path[0] = 0;
 				strcpy(cmd_path,_token);
 				strcat(cmd_path,"/\0");
 				strcat(cmd_path,command_token);
-				/*printf("cmd_path: %s\n",cmd_path);*/
+				
 				if(flags_token!=NULL)
 					execv(cmd_path,args);
 					
@@ -83,12 +77,6 @@ int main(){
 		
 		else{
 			pid=wait(&status); 
-			/* 
-			WHEN THE CHILD PROCESS DIES, ALL OF ITS MEMORY GETS FREED AUTOMATICALLY AND WE NO LONGER HAVE ACCESS, FREE IS USELESS.
-			printf("THE FIRST LINE IN THE STRING IS %s\n",args[0]); <- Segemation Error.
-			free(args);
-			printf("Freed!\n");
-			*/
 			if(WEXITSTATUS(status)==1){
 			printf("File or command were not found.\n");
 			}
